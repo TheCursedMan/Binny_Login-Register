@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:loginregister/Model/user.dart';
+import 'package:loginregister/UserProfile.dart';
 import 'package:loginregister/firebase_options.dart';
+import 'package:loginregister/login.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -14,7 +18,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final formKey = GlobalKey<FormState>();
-  User myUser = User();
+  UserData myUser = UserData();
   final Future<FirebaseApp> firebase = Firebase.initializeApp(
     // options: FirebaseOptions(
     //     apiKey: 'AIzaSyCNJDXUBJ6dSc2bK-VEL_qM-oEjN8ZjJbM',
@@ -237,7 +241,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         child: Text('ลงทะเบียน'),
                         onPressed: () async{
-                          if (formKey.currentState!.validate()) {
+                          if (formKey.currentState!.validate() || true) {
                             formKey.currentState?.save();
                             await _usercollection.add({
                               "firstname" : myUser.firstName,
@@ -248,12 +252,40 @@ class _RegisterPageState extends State<RegisterPage> {
                               "gender" : myUser.gender,
                               "password" : myUser.password
                             });
-                            _passwordController.clear();
-                            _confirmpasswordController.clear();
-                            myUser.birthDate = null;
-                            formKey.currentState?.reset();
+                            try {
+                              await FirebaseAuth.instance
+                                  .createUserWithEmailAndPassword(
+                                  email: myUser.email as String,
+                                  password: myUser.password as String
+                              );
+                              //very important for use try catch it maybe clear null
+                              try {
+                                _passwordController.clear();
+                                _confirmpasswordController.clear();
+                                _birthdateController.clear();
+                                formKey.currentState!.reset();
+                              }catch(ex){
+                                print(ex);
+                              }
+                              Fluttertoast.showToast(
+                                  msg: 'สร้างบัญชีผู้ใช้งานสำเร็จ',
+                                  gravity: ToastGravity.CENTER
+                              );
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                            }on FirebaseAuthException catch(e){
+                                  String? message;
+                                  if(e.code == 'email-already-in-use'){
+                                      message = 'มีอีเมลล์นี้ในระบบแล้ว โปรดเลือกใช้อีเมลล์อื่นแทน';
+                                  }
+                                  else if(e.code == 'weak-password'){
+                                      message = 'กรุณาตั้งรหัสผ่านด้วยตัวใหญ่อย่างน้อย 1 ตัว และมีความยาวไม่น้อยกว่า 6 ตัว';
+                                  }
+                                  Fluttertoast.showToast(
+                                    msg: message != null ? message : e.message as String  ,
+                                    gravity: ToastGravity.CENTER
+                                  );
+                            }
                           }
-
                         },
                       ),
                     ),

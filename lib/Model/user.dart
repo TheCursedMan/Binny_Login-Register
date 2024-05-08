@@ -1,4 +1,4 @@
-class User {
+class UserData {
   String? firstName;
   String? lastName;
   String? username;
@@ -7,7 +7,7 @@ class User {
   String? gender;
   String? password;
 
-  User({
+  UserData({
     this.firstName,
     this.lastName,
     this.username,
