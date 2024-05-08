@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
@@ -24,6 +25,11 @@ class _RegisterPageState extends State<RegisterPage> {
     // ),
     options: DefaultFirebaseOptions.currentPlatform
   );
+
+  CollectionReference _usercollection = FirebaseFirestore.instance.collection('users');
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmpasswordController = TextEditingController();
+  final TextEditingController _birthdateController = TextEditingController();
   //date picker
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -37,12 +43,16 @@ class _RegisterPageState extends State<RegisterPage> {
         myUser.birthDate = picked
             .toIso8601String()
             .substring(0, 10); // or format the picked date as needed
+        _birthdateController.text = myUser.birthDate ?? '';
       });
     }
+
   }
 
   @override
   Widget build(BuildContext context) {
+    _passwordController.clear();
+    _confirmpasswordController.clear();
     return FutureBuilder(future: firebase, builder: (context , snapshot){
       if(snapshot.hasError){
         print(snapshot.error);
@@ -125,15 +135,17 @@ class _RegisterPageState extends State<RegisterPage> {
                       onTap: () => _selectDate(context),
                       child: AbsorbPointer(
                         child: TextFormField(
-                          controller:
-                              TextEditingController(text: myUser.birthDate ?? ''),
-                          keyboardType: TextInputType.datetime,
+                          controller: _birthdateController,
+                          keyboardType: TextInputType.none,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please select your birth date';
                             }
                             return null;
                           },
+                          decoration: InputDecoration(
+                            suffixIcon: Icon(Icons.calendar_month)
+                          ),
                         ),
                       ),
                     ),
@@ -183,6 +195,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: TextStyle(fontSize: 20),
                     ),
                     TextFormField(
+                      controller: _passwordController,
                       obscureText: true,
                       validator: RequiredValidator(errorText: 'กรุณาป้อนรหัสผ่าน'),
                       onSaved: (String? password) {
@@ -197,9 +210,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       style: TextStyle(fontSize: 20),
                     ),
                     TextFormField(
+                      controller: _confirmpasswordController,
                       obscureText: true,
                       validator: (value) {
-                        if (value != myUser.password) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please re-enter your password';
+                        }
+                        if (value != _passwordController.text) {
                           return 'Password not same';
                         }
                         return null;
@@ -219,16 +236,24 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         child: Text('ลงทะเบียน'),
-                        onPressed: () {
+                        onPressed: () async{
                           if (formKey.currentState!.validate()) {
                             formKey.currentState?.save();
-                            print('${myUser.firstName}');
-                            print('${myUser.lastName}');
-                            print('${myUser.email}');
-                            print('${myUser.birthDate}');
-                            print('${myUser.gender}');
-                            print('${myUser.password}');
+                            await _usercollection.add({
+                              "firstname" : myUser.firstName,
+                              "lastname" : myUser.lastName,
+                              "username" : myUser.username,
+                              "email" : myUser.email,
+                              "birthdate" : myUser.birthDate,
+                              "gender" : myUser.gender,
+                              "password" : myUser.password
+                            });
+                            _passwordController.clear();
+                            _confirmpasswordController.clear();
+                            myUser.birthDate = null;
+                            formKey.currentState?.reset();
                           }
+
                         },
                       ),
                     ),
