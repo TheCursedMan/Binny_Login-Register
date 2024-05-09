@@ -67,6 +67,9 @@ class _RegisterPageState extends State<RegisterPage> {
       }
       if(snapshot.connectionState == ConnectionState.done){
         return Scaffold(
+          appBar: AppBar(
+            title: Text('Binny(Mockup)'),
+          ),
           body: Container(
             padding: EdgeInsets.all(20),
             child: Form(

@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:form_field_validator/form_field_validator.dart';
+import 'package:loginregister/Register.dart';
 
 import 'Model/user.dart';
 import 'UserProfile.dart';
@@ -36,6 +38,9 @@ class _LoginPageState extends State<LoginPage> {
       }
       if(snapshot.connectionState == ConnectionState.done){
         return Scaffold(
+          appBar: AppBar(
+            title: Text('Binny(Mockup)'),
+          ),
           body: Container(
             padding: EdgeInsets.all(20),
             child: Form(
@@ -114,6 +119,20 @@ class _LoginPageState extends State<LoginPage> {
                         },
                       ),
                     ),
+                    SizedBox(height: 20,),
+                    Center(
+                      child: GestureDetector(
+                        child: Text('หากยังไม่ลงทะเบียน คลิกที่นี่'),
+                        onTap: (){
+                          Navigator.pushReplacement(
+                              context, MaterialPageRoute(
+                              builder: (context) {
+                                return RegisterPage();
+                              })
+                          );
+                        },
+                      ),
+                    )
                   ],
                 ),
               ),
